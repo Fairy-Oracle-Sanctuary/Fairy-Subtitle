@@ -1,0 +1,102 @@
+[Script Info]
+Title: 综合测试字幕
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: 1920
+PlayResY: 1080。
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+Style: Title,微软雅黑,36,&H00FFFF00,&H000000FF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,3,3,8,50,50,50,1
+Style: Karaoke,方正黑体简体,24,&H0000FF00,&H00FFFFFF,&H00FF0000,&H80000000,1,1,0,0,100,100,0,0,1,2,0,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,普通文本显示
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,,{\b1}粗体文本{\b0}
+Dialogue: 0,0:00:03.00,0:00:05.00,Default,,0,0,0,,{\i1}斜体文本{\i0}
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,{\u1}下划线文本{\u0}
+Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,{\s1}删除线文本{\s0}
+
+; 颜色变化测试
+Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,,{\c&H0000FF&}红色文本{\c}
+Dialogue: 0,0:00:07.00,0:00:09.00,Default,,0,0,0,,{\2c&H00FF00&}绿色边框{\2c}
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,,{\3c&H0000FF&}蓝色阴影{\3c}
+Dialogue: 0,0:00:09.00,0:00:11.00,Default,,0,0,0,,{\4c&HFF00FF&}紫色背景{\4c}
+
+; 字体大小和缩放
+Dialogue: 0,0:00:10.00,0:00:12.00,Default,,0,0,0,,{\fs30}大字体{\fs}
+Dialogue: 0,0:00:11.00,0:00:13.00,Default,,0,0,0,,{\fscx150}水平拉伸{\fscx}
+Dialogue: 0,0:00:12.00,0:00:14.00,Default,,0,0,0,,{\fscy50}垂直压缩{\fscy}
+
+; 位置和移动
+Dialogue: 0,0:00:13.00,0:00:15.00,Default,,0,0,0,,{\pos(100,100)}固定位置
+Dialogue: 0,0:00:14.00,0:00:16.00,Default,,0,0,0,,{\move(200,200,400,200,0,1000)}移动文本
+Dialogue: 0,0:00:15.00,0:00:17.00,Default,,0,0,0,,{\org(960,540)}旋转中心
+
+; 旋转效果
+Dialogue: 0,0:00:16.00,0:00:18.00,Default,,0,0,0,,{\frz30}Z轴旋转30度{\frz}
+Dialogue: 0,0:00:17.00,0:00:19.00,Default,,0,0,0,,{\frx45}X轴旋转45度{\frx}
+Dialogue: 0,0:00:18.00,0:00:20.00,Default,,0,0,0,,{\fry60}Y轴旋转60度{\fry}
+
+; 淡入淡出
+Dialogue: 0,0:00:19.00,0:00:22.00,Default,,0,0,0,,{\fade(0,255,0,0,500,1500,2000)}淡入淡出效果
+Dialogue: 0,0:00:20.00,0:00:23.00,Default,,0,0,0,,{\fad(1000,1000)}简单淡入淡出
+
+; 边框和阴影
+Dialogue: 0,0:00:21.00,0:00:23.00,Default,,0,0,0,,{\bord5}粗边框{\bord}
+Dialogue: 0,0:00:22.00,0:00:24.00,Default,,0,0,0,,{\shad10}大阴影{\shad}
+Dialogue: 0,0:00:23.00,0:00:25.00,Default,,0,0,0,,{\be1}模糊边缘{\be}
+Dialogue: 0,0:00:24.00,0:00:26.00,Default,,0,0,0,,{\blur5}高斯模糊{\blur}
+
+; 对齐方式
+Dialogue: 0,0:00:25.00,0:00:27.00,Default,,0,0,0,,{\an1}左下对齐
+Dialogue: 0,0:00:26.00,0:00:28.00,Default,,0,0,0,,{\an5}居中对齐
+Dialogue: 0,0:00:27.00,0:00:29.00,Default,,0,0,0,,{\an9}右上对齐
+
+; 卡拉OK效果
+Dialogue: 0,0:00:28.00,0:00:35.00,Karaoke,,0,0,0,,{\k100}欢{\k100}迎{\k100}使{\k100}用{\k100}A{\k100}S{\k100}S{\k100}字{\k100}幕
+Dialogue: 0,0:00:30.00,0:00:37.00,Karaoke,,0,0,0,,{\K200}长{\K200}时{\K200}间{\K200}卡{\K200}拉{\K200}O{\K200}K{\K200}效{\K200}果
+Dialogue: 0,0:00:32.00,0:00:39.00,Karaoke,,0,0,0,,{\ko100}仅{\ko100}边{\ko100}框{\ko100}填{\ko100}充
+
+; 动画效果
+Dialogue: 0,0:00:35.00,0:00:45.00,Default,,0,0,0,,{\t(0,2000,\frz360)}旋转动画
+Dialogue: 0,0:00:36.00,0:00:46.00,Default,,0,0,0,,{\t(0,1000,\fscx150)}缩放动画
+Dialogue: 0,0:00:37.00,0:00:47.00,Default,,0,0,0,,{\t(0,1500,\c&HFF0000&)}颜色变化动画
+Dialogue: 0,0:00:38.00,0:00:48.00,Default,,0,0,0,,{\t(0,1000,\alpha&HFF&)}透明度动画
+Dialogue: 0,0:00:39.00,0:00:49.00,Default,,0,0,0,,{\t(0,2000,\bord5)}边框变化动画
+
+; 复杂动画组合
+Dialogue: 0,0:00:40.00,0:00:50.00,Default,,0,0,0,,{\t(0,1000,\frz360)\t(1000,2000,\fscx150)\t(2000,3000,\c&H00FF00&)}多重动画
+Dialogue: 0,0:00:41.00,0:00:51.00,Default,,0,0,0,,{\t(0,3000,\move(100,100,800,100))}移动动画
+
+; 特殊效果
+Dialogue: 0,0:00:42.00,0:00:44.00,Default,,0,0,0,,{\p1}m 100 100 l 200 100 200 200 100 200{\p0}矩形绘制
+Dialogue: 0,0:00:43.00,0:00:45.00,Default,,0,0,0,,{\p1}m 150 150 l 180 120 210 150 180 180{\p0}菱形绘制
+Dialogue: 0,0:00:44.00,0:00:46.00,Default,,0,0,0,,{\xa0}\N换行测试
+Dialogue: 0,0:00:45.00,0:00:47.00,Default,,0,0,0,,{\h}软空格测试
+
+; 字体和编码
+Dialogue: 0,0:00:46.00,0:00:48.00,Default,,0,0,0,,{\fn宋体}宋体文本{\fn}
+Dialogue: 0,0:00:47.00,0:00:49.00,Default,,0,0,0,,{\fs24}字体大小24{\fs}
+Dialogue: 0,0:00:48.00,0:00:50.00,Default,,0,0,0,,{\fsp5}字符间距5{\fsp}
+
+; 透明度
+Dialogue: 0,0:00:49.00,0:00:51.00,Default,,0,0,0,,{\alpha&H80&}半透明文本
+Dialogue: 0,0:00:50.00,0:00:52.00,Default,,0,0,0,,{\1a&H40&}主色透明度
+Dialogue: 0,0:00:51.00,0:00:53.00,Default,,0,0,0,,{\2a&H60&}边框透明度
+Dialogue: 0,0:00:53.00,0:00:55.00,Default,,0,0,0,,{\3a&H80&}阴影透明度
+Dialogue: 0,0:00:54.00,0:00:56.00,Default,,0,0,0,,{\4a&HA0&}背景透明度
+
+; 剪切和变形
+Dialogue: 0,0:00:55.00,0:00:57.00,Default,,0,0,0,,{\clip(0,0,960,540)}剪切区域测试
+Dialogue: 0,0:00:56.00,0:00:58.00,Default,,0,0,0,,{\iclip(100,100,500,400)}反向剪切
+Dialogue: 0,0:00:57.00,0:00:59.00,Default,,0,0,0,,{\org(480,270)\frz180}围绕中心旋转180度
+
+; 组合效果
+Dialogue: 0,0:00:58.00,0:01:00.00,Title,,0,0,0,,{\b1\c&H00FFFF&\bord3\shad5\pos(960,200)\an8}{\t(0,2000,\frz360)}标题旋转效果
+Dialogue: 0,0:00:59.00,0:01:02.00,Default,,0,0,0,,{\move(0,540,1920,540)\t(0,2000,\c&HFF00FF&)}彩虹滚动文字{\c}

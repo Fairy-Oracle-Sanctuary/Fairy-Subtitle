@@ -1,0 +1,71 @@
+# Python虚拟环境
+venv/
+env/
+.venv/
+ENV/
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 构建文件
+build/
+dist/
+*.egg/
+*.egg-info/
+*.whl/
+
+# 日志文件
+*.log
+logs/
+
+# IDE配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 测试覆盖报告
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 其他临时文件
+*.tmp
+*.temp
+.cache/
+
+# Windows特定文件
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# MacOS特定文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux特定文件
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
