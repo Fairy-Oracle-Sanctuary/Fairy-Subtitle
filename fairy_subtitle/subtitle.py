@@ -4,7 +4,7 @@ import os
 
 from .exceptions import UnsupportedFormatError
 from .models import Subtitle
-from .parsers import parse_ass, parse_srt
+from .parsers import parse_ass, parse_srt, parse_vtt  # 添加parse_vtt导入
 
 # 未来可以导入更多解析器
 # from .parsers import parse_vtt, parse_ass
@@ -44,8 +44,8 @@ class SubtitleLoader:
         # 3. 根据格式选择对应的解析器
         if format == "srt":
             return parse_srt(file_path, content)
-        # elif format == 'vtt':
-        #     return parse_vtt(content)
+        elif format == 'vtt':
+            return parse_vtt(file_path, content)  # 启用VTT解析
         elif format == "ass":
             return parse_ass(file_path, content)
         else:

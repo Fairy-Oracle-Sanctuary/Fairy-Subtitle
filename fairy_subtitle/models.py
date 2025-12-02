@@ -26,6 +26,7 @@ class AssInfo:
     v4_Styles: dict
     events: dict
     fonts: dict
+    graphics: dict  # 添加graphics字段
 
 
 @dataclass
@@ -148,10 +149,7 @@ class Subtitle:
         start_time = self.cues[index1].start
         end_time = self.cues[index2].end
         merged_text = "\n".join(cue.text for cue in self.cues[index1 : index2 + 1])
-        merged_index = self.cues[index1].index
-        merged_cue = Cue(
-            start=start_time, end=end_time, text=merged_text, index=merged_index
-        )
+        merged_cue = Cue(start=start_time, end=end_time, text=merged_text, index=None)
         self.cues[index1 : index2 + 1] = [merged_cue]
         self._recalculate_indices(index1)
         self._recalcluate_duration()
@@ -162,7 +160,9 @@ class Subtitle:
             raise IndexError("Index out of range")
         if time < self.cues[index].start or time > self.cues[index].end:
             raise ValueError("Time is not within the cue")
-        new_cue = Cue(start=time, end=self.cues[index].end, text=self.cues[index].text)
+        new_cue = Cue(
+            start=time, end=self.cues[index].end, text=self.cues[index].text, index=None
+        )
         self.cues[index].end = time
         self.cues.insert(index + 1, new_cue)
         self._recalculate_indices(index)
@@ -171,6 +171,7 @@ class Subtitle:
         """就地修改。在指定位置插入一个字幕块。"""
         if index < 0 or index > len(self.cues):
             raise IndexError("Index out of range")
+        cue.index = None  # 重置索引，让_recalculate_indices统一设置
         self.cues.insert(index, cue)
         self._recalculate_indices(index)
         self._recalcluate_duration()

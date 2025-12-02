@@ -224,6 +224,30 @@ def parse_ass_events(content: str) -> tuple[dict, list[Cue], float]:
     return events, cues, duration
 
 
+def parse_ass_fonts(content: str) -> dict:
+    """
+    解析 ASS 格式的 [Fonts] 部分，并返回一个字典。
+    """
+    fonts = []
+    for line in content.split("\n"):
+        line = line.strip()
+        if line and not line.startswith("!"):
+            fonts.append(line)
+    return {"fonts": fonts}
+
+
+def parse_ass_graphics(content: str) -> dict:
+    """
+    解析 ASS 格式的 [Graphics] 部分，并返回一个字典。
+    """
+    graphics = []
+    for line in content.split("\n"):
+        line = line.strip()
+        if line and not line.startswith("!"):
+            graphics.append(line)
+    return {"graphics": graphics}
+
+
 def parse_ass(file_path: str, content: str) -> Subtitle:
     """
     解析 ASS 格式的文本内容，并返回一个 Subtitle 对象。
@@ -235,34 +259,185 @@ def parse_ass(file_path: str, content: str) -> Subtitle:
         [Graphics]
     """
 
-    # part_names = [
-    #     "[Script Info]",
-    #     "[V4+ Styles]",
-    #     "[Events]",
-    #     "[fonts]",
-    # ]
+    # 使用正则表达式分割各个部分
+    parts = {}
+    current_part = None
+    current_content = []
 
-    # ASS 字幕块之间由[]来分隔
-    blocks = re.split(r"\[.*?\]", content)[1:]
+    for line in content.split("\n"):
+        # 检查是否是新的部分开始
+        if line.strip().startswith("[") and line.strip().endswith("]"):
+            # 如果有当前部分，保存它
+            if current_part is not None:
+                parts[current_part] = "\n".join(current_content)
+            # 开始新的部分
+            current_part = line.strip()
+            current_content = []
+        else:
+            if current_part is not None:
+                current_content.append(line)
 
-    # [Script Info]
-    script_info = parse_ass_script_info(blocks[0])
+    # 保存最后一个部分
+    if current_part is not None:
+        parts[current_part] = "\n".join(current_content)
 
-    # [V4+ Styles]
-    v4_style = parse_ass_v4_style(blocks[1])
+    # 初始化默认值
+    script_info = {}
+    v4_style = {}
+    events = {}
+    cues = []
+    duration = 0.0
+    fonts = {}
+    graphics = {}
 
-    # [Events]
-    events, cues, duration = parse_ass_events(blocks[2])
+    # 解析各个部分
+    if "[Script Info]" in parts:
+        script_info = parse_ass_script_info(parts["[Script Info]"])
 
+    if "[V4+ Styles]" in parts:
+        v4_style = parse_ass_v4_style(parts["[V4+ Styles]"])
+
+    if "[Events]" in parts:
+        events, cues, duration = parse_ass_events(parts["[Events]"])
+
+    if "[Fonts]" in parts:
+        fonts = parse_ass_fonts(parts["[Fonts]"])
+
+    if "[Graphics]" in parts:
+        graphics = parse_ass_graphics(parts["[Graphics]"])
+
+    # 创建 AssInfo 对象
     ass_info = AssInfo(
-        script_Info=script_info, v4_Styles=v4_style, events=events, fonts=dict()
+        script_Info=script_info,
+        v4_Styles=v4_style,
+        events=events,
+        fonts=fonts,
+        graphics=graphics,
     )
+
+    # 创建 SubtitleInfo 对象
     info = SubtitleInfo(
         path=file_path,
         format="ass",
         duration=duration,
         size=len(cues),
         other_info=ass_info,
+    )
+
+    return Subtitle(cues=cues, info=info)
+
+
+def _parse_vtt_time(time_str: str) -> float:
+    """将 VTT 格式的时间字符串转换为秒数 (float)"""
+    # VTT 格式: 00:00:00.000 或 00:00.000
+    parts = time_str.split(":")
+    if len(parts) == 2:
+        # MM:SS.mmm 格式
+        minutes, seconds_ms = parts
+        hours = 0
+    elif len(parts) == 3:
+        # HH:MM:SS.mmm 格式
+        hours, minutes, seconds_ms = parts
+    else:
+        raise InvalidTimeFormatError(f"无效的 VTT 时间格式: {time_str}")
+
+    seconds, ms = seconds_ms.split(".")
+    total_seconds = (
+        int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(ms) / 1000
+    )
+    return float(total_seconds)
+
+
+def parse_vtt(file_path: str, content: str) -> Subtitle:
+    """
+    解析 VTT 格式的文本内容，并返回一个 Subtitle 对象。
+    """
+    cues = []
+    earliest_start_time = float("inf")
+    latest_end_time = 0.0
+
+    # 处理BOM
+    if content.startswith("\ufeff"):
+        content = content[1:]
+
+    # 定义时间戳的正则表达式
+    timestamp_pattern = re.compile(
+        r"(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})"
+    )
+
+    # 分割字幕块 (使用两个或更多的换行符作为分隔符)
+    blocks = re.split(r"\n\s*\n", content)
+
+    for block in blocks:
+        # 跳过空块
+        if not block.strip():
+            continue
+
+        # 跳过WEBVTT头部和注释块
+        if (
+            block.strip() == "WEBVTT"
+            or block.strip().startswith("NOTE")
+            or block.strip().startswith("STYLE")
+        ):
+            continue
+
+        # 在块中查找时间戳
+        timestamp_match = timestamp_pattern.search(block)
+        if timestamp_match:
+            try:
+                # 提取开始和结束时间
+                start_time_str = timestamp_match.group(1)
+                end_time_str = timestamp_match.group(2)
+
+                # 转换时间
+                start_time = _parse_vtt_time(start_time_str)
+                end_time = _parse_vtt_time(end_time_str)
+
+                # 提取字幕文本 (时间戳后面的部分)
+                lines = block.split("\n")
+                text_lines = []
+                found_timestamp = False
+
+                for line in lines:
+                    if timestamp_pattern.search(line):
+                        found_timestamp = True
+                        continue
+                    # 跳过序号行 (数字行)
+                    if (
+                        found_timestamp
+                        and not re.match(r"^\s*\d+\s*$", line)
+                        and line.strip()
+                    ):
+                        text_lines.append(line.strip())
+
+                # 如果有文本内容，创建字幕
+                if text_lines:
+                    text = "\n".join(text_lines)
+                    cue = Cue(start=start_time, end=end_time, text=text, index=None)
+                    cues.append(cue)
+
+                    # 更新时间范围
+                    earliest_start_time = min(earliest_start_time, start_time)
+                    latest_end_time = max(latest_end_time, end_time)
+
+            except Exception:
+                # 忽略解析失败的块
+                continue
+
+    # 设置索引
+    for i, cue in enumerate(cues):
+        cue.index = i
+
+    # 计算时长
+    duration = latest_end_time - earliest_start_time if cues else 0.0
+
+    # 创建 SubtitleInfo 对象
+    info = SubtitleInfo(
+        path=file_path,
+        format="vtt",
+        duration=duration,
+        size=len(cues),
+        other_info=None,
     )
 
     return Subtitle(cues=cues, info=info)
