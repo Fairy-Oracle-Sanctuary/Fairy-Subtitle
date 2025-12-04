@@ -1,6 +1,8 @@
 """
+fairy-subtitle - A simple and powerful subtitle parsing library
 fairy-subtitle - 一个简单而强大的字幕解析库
 
+Supports parsing and processing of multiple subtitle formats
 支持多种字幕格式的解析和处理
 """
 
