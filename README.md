@@ -11,7 +11,7 @@
   </a>
 
   <a style="text-decoration:none">
-    <img src="https://img.shields.io/badge/Python-3.9.13-blue" alt="Python 3.9.13"/>
+    <img src="https://img.shields.io/badge/Python-3.9+-blue" alt="Python 3.9+"/>
   </a>
 
   <a style="text-decoration:none">
