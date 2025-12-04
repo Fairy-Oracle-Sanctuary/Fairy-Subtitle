@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fairy-subtitle"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
   {name = "baby2016", email = "2185823427@qq.com"},
 ]
-description = "一个简单而强大的Python字幕解析库，支持多种字幕格式的解析和处理。"
-readme = "README.md"
+description = "A simple Python subtitle parsing library"
+readme = "README.pypi.md"
 requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3",

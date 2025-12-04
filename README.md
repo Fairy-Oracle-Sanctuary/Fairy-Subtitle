@@ -21,7 +21,7 @@
 
 
 <p align="center">
-<a href="README.md">简体中文</a> | <a href="README.en.md">English</a>
+<a href="https://github.com/Fairy-Oracle-Sanctuary/Fairy-Subtitle/blob/main/README.md">简体中文</a> | <a href="https://github.com/Fairy-Oracle-Sanctuary/Fairy-Subtitle/blob/main/README.en.md">English</a>
 </p>
 
 ## 特性
