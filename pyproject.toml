@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fairy-subtitle"
+version = "0.1.0"
+authors = [
+  {name = "baby2016", email = "2185823427@qq.com"},
+]
+description = "一个简单而强大的Python字幕解析库，支持多种字幕格式的解析和处理。"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Multimedia :: Video :: Display",
+  "Topic :: Text Processing :: Filters",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/baby2016/fairy-subtitle"
+"Bug Tracker" = "https://github.com/baby2016/fairy-subtitle/issues"

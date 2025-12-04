@@ -11,7 +11,9 @@ from fairy_subtitle.models import AssInfo, Cue, Subtitle, SubtitleInfo
 
 
 def _parse_srt_time(time_str: str) -> float:
-    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)"""
+    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)
+    Convert 'HH:MM:SS,ms' format time to seconds (float)
+    """
     h, m, s_ms = time_str.split(":")
     s, ms = s_ms.split(",")
     total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
@@ -21,6 +23,7 @@ def _parse_srt_time(time_str: str) -> float:
 def parse_srt(file_path: str, content: str) -> Subtitle:
     """
     解析 SRT 格式的文本内容，并返回一个 Subtitle 对象。
+    Parse SRT format text content and return a Subtitle object.
     """
     cues = []
     # SRT 字幕块之间由两个或更多的换行符分隔
@@ -75,7 +78,9 @@ def parse_srt(file_path: str, content: str) -> Subtitle:
 
 
 def _parse_ass_time(time_str: str) -> float:
-    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)"""
+    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)
+    Convert 'HH:MM:SS,ms' format time to seconds (float)
+    """
     h, m, s_ms = time_str.split(":")
     s, ms = s_ms.split(".")
     total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
@@ -85,6 +90,7 @@ def _parse_ass_time(time_str: str) -> float:
 def parse_ass_script_info(content: str) -> dict:
     """
     解析 ASS 格式的 [Script Info] 部分，并返回一个字典。
+    Parse the [Script Info] section of ASS format and return a dictionary.
     """
     script_info = {}
     script_info_set = set(ass_script_info)  # 集合查找速度为O(1)
@@ -105,6 +111,7 @@ def parse_ass_script_info(content: str) -> dict:
 def parse_ass_v4_style(content: str) -> dict:
     """
     解析 ASS 格式的 [V4+ Styles] 部分，并返回一个字典。
+    Parse the [V4+ Styles] section of ASS format and return a dictionary.
     """
     v4_style = {}
 
@@ -135,6 +142,7 @@ def parse_ass_v4_style(content: str) -> dict:
 def parse_ass_events(content: str) -> tuple[dict, list[Cue], float]:
     """
     解析 ASS 格式的 [Events] 部分。
+    Parse the [Events] section of ASS format.
     """
     events = {}
 
@@ -227,6 +235,7 @@ def parse_ass_events(content: str) -> tuple[dict, list[Cue], float]:
 def parse_ass_fonts(content: str) -> dict:
     """
     解析 ASS 格式的 [Fonts] 部分，并返回一个字典。
+    Parse the [Fonts] section of ASS format and return a dictionary.
     """
     fonts = []
     for line in content.split("\n"):
@@ -239,6 +248,7 @@ def parse_ass_fonts(content: str) -> dict:
 def parse_ass_graphics(content: str) -> dict:
     """
     解析 ASS 格式的 [Graphics] 部分，并返回一个字典。
+    Parse the [Graphics] section of ASS format and return a dictionary.
     """
     graphics = []
     for line in content.split("\n"):
@@ -252,6 +262,13 @@ def parse_ass(file_path: str, content: str) -> Subtitle:
     """
     解析 ASS 格式的文本内容，并返回一个 Subtitle 对象。
     组成:
+        [Script Info]
+        [V4+ Styles]
+        [Events]
+        [fonts]
+        [Graphics]
+    Parse ASS format text content and return a Subtitle object.
+    Components:
         [Script Info]
         [V4+ Styles]
         [Events]
@@ -328,7 +345,9 @@ def parse_ass(file_path: str, content: str) -> Subtitle:
 
 
 def _parse_vtt_time(time_str: str) -> float:
-    """将 VTT 格式的时间字符串转换为秒数 (float)"""
+    """将 VTT 格式的时间字符串转换为秒数 (float)
+    Convert VTT format time string to seconds (float)
+    """
     # VTT 格式: 00:00:00.000 或 00:00.000
     parts = time_str.split(":")
     if len(parts) == 2:
@@ -351,6 +370,7 @@ def _parse_vtt_time(time_str: str) -> float:
 def parse_vtt(file_path: str, content: str) -> Subtitle:
     """
     解析 VTT 格式的文本内容，并返回一个 Subtitle 对象。
+    Parse VTT format text content and return a Subtitle object.
     """
     cues = []
     earliest_start_time = float("inf")
@@ -441,3 +461,144 @@ def parse_vtt(file_path: str, content: str) -> Subtitle:
     )
 
     return Subtitle(cues=cues, info=info)
+
+
+def _parse_srt_time(time_str: str) -> float:
+    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)"""
+    h, m, s_ms = time_str.split(":")
+    s, ms = s_ms.split(",")
+    total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
+    return float(total_seconds)
+
+
+def _parse_ass_time(time_str: str) -> float:
+    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)"""
+    h, m, s_ms = time_str.split(":")
+    s, ms = s_ms.split(".")
+    total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
+    return float(total_seconds)
+
+
+def _parse_vtt_time(time_str: str) -> float:
+    """将 VTT 格式的时间字符串转换为秒数 (float)"""
+    # VTT 格式: 00:00:00.000 或 00:00.000
+    parts = time_str.split(":")
+    if len(parts) == 2:
+        # MM:SS.mmm 格式
+        minutes, seconds_ms = parts
+        hours = 0
+    elif len(parts) == 3:
+        # HH:MM:SS.mmm 格式
+        hours, minutes, seconds_ms = parts
+    else:
+        raise InvalidTimeFormatError(f"无效的 VTT 时间格式: {time_str}")
+
+    seconds, ms = seconds_ms.split(".")
+    total_seconds = (
+        int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(ms) / 1000
+    )
+    return float(total_seconds)
+
+
+# 时间格式转换函数
+def _format_srt_time(seconds: float) -> str:
+    """将秒数转换为SRT格式时间字符串 (HH:MM:SS,ms)
+    Convert seconds to SRT format time string (HH:MM:SS,ms)
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_int = int(seconds % 60)
+    milliseconds = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d},{milliseconds:03d}"
+
+
+def _format_vtt_time(seconds: float) -> str:
+    """将秒数转换为VTT格式时间字符串 (HH:MM:SS.mmm)
+    Convert seconds to VTT format time string (HH:MM:SS.mmm)
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_int = int(seconds % 60)
+    milliseconds = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
+
+
+def _format_ass_time(seconds: float) -> str:
+    """将秒数转换为ASS格式时间字符串 (HH:MM:SS.ms)
+    Convert seconds to ASS format time string (HH:MM:SS.ms)
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_int = int(seconds % 60)
+    milliseconds = int((seconds % 1) * 100)
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:02d}"
+
+
+# 格式转换函数
+def to_srt(subtitle: Subtitle) -> str:
+    """将Subtitle对象转换为SRT格式字符串
+    Convert Subtitle object to SRT format string
+    """
+    srt_content = []
+    for i, cue in enumerate(subtitle.cues, 1):
+        srt_content.append(str(i))
+        start_time = _format_srt_time(cue.start)
+        end_time = _format_srt_time(cue.end)
+        srt_content.append(f"{start_time} --> {end_time}")
+        srt_content.append(cue.text)
+        srt_content.append("")  # 空行分隔字幕块
+    return "\n".join(srt_content)
+
+
+def to_vtt(subtitle: Subtitle) -> str:
+    """将Subtitle对象转换为VTT格式字符串
+    Convert Subtitle object to VTT format string
+    """
+    vtt_content = ["WEBVTT", ""]
+    for i, cue in enumerate(subtitle.cues, 1):
+        start_time = _format_vtt_time(cue.start)
+        end_time = _format_vtt_time(cue.end)
+        vtt_content.append(f"{start_time} --> {end_time}")
+        vtt_content.append(cue.text)
+        vtt_content.append("")  # 空行分隔字幕块
+    return "\n".join(vtt_content)
+
+
+def to_ass(subtitle: Subtitle) -> str:
+    """将Subtitle对象转换为ASS格式字符串
+    Convert Subtitle object to ASS format string
+    """
+    ass_content = [
+        "[Script Info]",
+        "Title: Converted Subtitle",
+        "ScriptType: v4.00+",
+        "PlayResX: 1920",
+        "PlayResY: 1080",
+        "Aspect Ratio: 16:9",
+        "Collisions: Normal",
+        "Timer: 100.0000",
+        "WrapStyle: 0",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,0",
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+
+    for i, cue in enumerate(subtitle.cues, 1):
+        start_time = _format_ass_time(cue.start)
+        end_time = _format_ass_time(cue.end)
+        # 简单转换，只保留文本内容
+        text = cue.text.replace("\n", "\\N")
+        ass_content.append(
+            f"Dialogue: 0,{start_time},{end_time},Default,,0,0,0,,{text}"
+        )
+
+    return "\n".join(ass_content)
+
+
+# 转换函数映射
+# Transform function mapping
+transform_functions = {"srt": to_srt, "vtt": to_vtt, "ass": to_ass}
