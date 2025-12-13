@@ -10,16 +10,6 @@ from fairy_subtitle.exceptions import (
 from fairy_subtitle.models import AssInfo, Cue, Subtitle, SubtitleInfo
 
 
-def _parse_srt_time(time_str: str) -> float:
-    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)
-    Convert 'HH:MM:SS,ms' format time to seconds (float)
-    """
-    h, m, s_ms = time_str.split(":")
-    s, ms = s_ms.split(",")
-    total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
-    return float(total_seconds)
-
-
 def parse_srt(file_path: str, content: str) -> Subtitle:
     """
     解析 SRT 格式的文本内容，并返回一个 Subtitle 对象。
@@ -69,22 +59,12 @@ def parse_srt(file_path: str, content: str) -> Subtitle:
         info = SubtitleInfo(
             path=file_path,
             format="srt",
-            duration=latest_end_time - earliest_start_time,
+            duration=round(latest_end_time - earliest_start_time, 3),
             size=len(cues),
             other_info=None,
         )
 
     return Subtitle(cues=cues, info=info)
-
-
-def _parse_ass_time(time_str: str) -> float:
-    """将 'HH:MM:SS,ms' 格式的时间转换为秒数 (float)
-    Convert 'HH:MM:SS,ms' format time to seconds (float)
-    """
-    h, m, s_ms = time_str.split(":")
-    s, ms = s_ms.split(".")
-    total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
-    return float(total_seconds)
 
 
 def parse_ass_script_info(content: str) -> dict:
@@ -336,35 +316,12 @@ def parse_ass(file_path: str, content: str) -> Subtitle:
     info = SubtitleInfo(
         path=file_path,
         format="ass",
-        duration=duration,
+        duration=round(duration, 3),
         size=len(cues),
         other_info=ass_info,
     )
 
     return Subtitle(cues=cues, info=info)
-
-
-def _parse_vtt_time(time_str: str) -> float:
-    """将 VTT 格式的时间字符串转换为秒数 (float)
-    Convert VTT format time string to seconds (float)
-    """
-    # VTT 格式: 00:00:00.000 或 00:00.000
-    parts = time_str.split(":")
-    if len(parts) == 2:
-        # MM:SS.mmm 格式
-        minutes, seconds_ms = parts
-        hours = 0
-    elif len(parts) == 3:
-        # HH:MM:SS.mmm 格式
-        hours, minutes, seconds_ms = parts
-    else:
-        raise InvalidTimeFormatError(f"无效的 VTT 时间格式: {time_str}")
-
-    seconds, ms = seconds_ms.split(".")
-    total_seconds = (
-        int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(ms) / 1000
-    )
-    return float(total_seconds)
 
 
 def parse_vtt(file_path: str, content: str) -> Subtitle:
@@ -455,9 +412,120 @@ def parse_vtt(file_path: str, content: str) -> Subtitle:
     info = SubtitleInfo(
         path=file_path,
         format="vtt",
-        duration=duration,
+        duration=round(duration, 3),
         size=len(cues),
         other_info=None,
+    )
+
+    return Subtitle(cues=cues, info=info)
+
+
+def parse_sbv(file_path: str, content: str) -> Subtitle:
+    """
+    解析 SBV 格式的文本内容，并返回一个 Subtitle 对象。
+    Parse SBV format text content and return a Subtitle object.
+    """
+    cues = []
+    # SBV 字幕块之间由两个或更多的换行符分隔
+    blocks = re.split(r"\n\s*\n", content)
+
+    earliest_start_time = float("inf")
+    latest_end_time = 0
+    index = 0
+    for block in blocks:
+        lines = block.strip().split("\n")
+        if len(lines) < 2:
+            raise InvalidSubtitleContentError(f"无效的字幕块，行数不足2行:\n{block}")
+
+        try:
+            # 1. 解析时间轴
+            time_sbv = lines[0]
+            start_str, end_str = time_sbv.split(",")
+            start_time = _parse_sbv_time(start_str)
+            end_time = _parse_sbv_time(end_str)
+            earliest_start_time = min(earliest_start_time, start_time)
+            latest_end_time = max(latest_end_time, end_time)
+
+            # 2. 解析文本 (可能有多行)
+            text = "\n".join(lines[1:])
+
+            # 3. 创建 Cue 对象并添加到列表
+            cue = Cue(start=start_time, end=end_time, text=text, index=index)
+            cues.append(cue)
+            index += 1
+
+        except (ValueError, IndexError) as e:
+            if "unpack" in str(e):
+                raise InvalidTimeFormatError(f"时间格式错误: {time_sbv}")
+            elif "int" in str(e):
+                raise InvalidSubtitleContentError(f"序号格式错误: {lines[0]}")
+            else:
+                raise InvalidSubtitleContentError(f"解析字幕块失败: {e}")
+        except IndexError as e:
+            raise InvalidSubtitleContentError(f"字幕块索引错误: {e}")
+
+        # 5. 创建 SubtitleInfo 对象
+        info = SubtitleInfo(
+            path=file_path,
+            format="sbv",
+            duration=round(latest_end_time - earliest_start_time, 3),
+            size=len(cues),
+            other_info=None,
+        )
+
+    return Subtitle(cues=cues, info=info)
+
+
+def parse_sub(file_path: str, content: str) -> Subtitle:
+    """
+    解析MicroDVD (.sub)格式的文本内容，并返回一个Subtitle对象。
+    Parse MicroDVD (.sub) format text content and return a Subtitle object.
+    """
+    cues = []
+    # MicroDVD字幕使用{帧范围}文本格式
+    pattern = re.compile(r"\{([0-9]+)\}\{([0-9]+)\}(.*?)(?=\{[0-9]+\}|$)", re.DOTALL)
+    matches = pattern.findall(content)
+
+    # 默认帧率24，如果有指定帧率的信息行，使用指定的帧率
+    fps = 24
+    fps_pattern = re.compile(r"\{[0-9]+\}\{[0-9]+\}#\$\#([0-9]+)")
+    fps_match = fps_pattern.search(content)
+    if fps_match:
+        fps = int(fps_match.group(1))
+
+    earliest_start_time = float("inf")
+    latest_end_time = 0
+    index = 0
+
+    for start_frame, end_frame, text in matches:
+        try:
+            # 1. 解析时间轴（将帧号转换为秒数）
+            start_time = _parse_sub_time(start_frame, fps)
+            end_time = _parse_sub_time(end_frame, fps)
+            earliest_start_time = min(earliest_start_time, start_time)
+            latest_end_time = max(latest_end_time, end_time)
+
+            # 2. 处理文本
+            text = text.strip().replace("|", "\n")  # MicroDVD使用|分隔多行文本
+
+            # 3. 创建Cue对象并添加到列表
+            cue = Cue(start=start_time, end=end_time, text=text, index=index)
+            cues.append(cue)
+            index += 1
+
+        except ValueError as e:
+            raise InvalidSubtitleContentError(f"解析MicroDVD字幕块失败: {e}")
+
+    if not cues:
+        raise InvalidSubtitleContentError("未找到有效的MicroDVD字幕块")
+
+    # 创建SubtitleInfo对象
+    info = SubtitleInfo(
+        path=file_path,
+        format="sub",
+        duration=round(latest_end_time - earliest_start_time, 3),
+        size=len(cues),
+        other_info={"fps": fps},  # 保存帧率信息
     )
 
     return Subtitle(cues=cues, info=info)
@@ -500,6 +568,22 @@ def _parse_vtt_time(time_str: str) -> float:
     return float(total_seconds)
 
 
+def _parse_sbv_time(time_str: str) -> float:
+    """将 'HH:MM:SS.ms' 格式的时间转换为秒数 (float)"""
+    h, m, s_ms = time_str.split(":")
+    s, ms = s_ms.split(".")
+    total_seconds = int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
+    return float(total_seconds)
+
+
+def _parse_sub_time(time_str: str, fps: int = 24) -> float:
+    """将MicroDVD格式的帧号转换为秒数
+    Convert MicroDVD format frame number to seconds
+    """
+    frame = int(time_str)
+    return frame / fps
+
+
 # 时间格式转换函数
 def _format_srt_time(seconds: float) -> str:
     """将秒数转换为SRT格式时间字符串 (HH:MM:SS,ms)
@@ -532,6 +616,25 @@ def _format_ass_time(seconds: float) -> str:
     seconds_int = int(seconds % 60)
     milliseconds = int((seconds % 1) * 100)
     return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:02d}"
+
+
+def _format_sbv_time(seconds: float) -> str:
+    """将秒数转换为SBV格式时间字符串 (HH:MM:SS.ms)
+    Convert seconds to SBV format time string (HH:MM:SS.ms)
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_int = int(seconds % 60)
+    milliseconds = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
+
+
+def _format_sub_time(time: float, fps: int = 24) -> str:
+    """将秒数转换为MicroDVD格式的帧号
+    Convert seconds to MicroDVD format frame number
+    """
+    frame = int(round(time * fps))
+    return str(frame)
 
 
 # 格式转换函数
@@ -599,6 +702,49 @@ def to_ass(subtitle: Subtitle) -> str:
     return "\n".join(ass_content)
 
 
+def to_sbv(subtitle: Subtitle) -> str:
+    """将Subtitle对象转换为SBV格式字符串
+    Convert Subtitle object to SBV format string
+    """
+    sbv_content = []
+    for i, cue in enumerate(subtitle.cues, 1):
+        sbv_content.append(str(i))
+        start_time = _format_sbv_time(cue.start)
+        end_time = _format_sbv_time(cue.end)
+        sbv_content.append(f"{start_time} --> {end_time}")
+        sbv_content.append(cue.text)
+        sbv_content.append("")  # 空行分隔字幕块
+    return "\n".join(sbv_content)
+
+
+def to_sub(subtitle: Subtitle) -> str:
+    """将Subtitle对象转换为MicroDVD (.sub)格式字符串
+    Convert Subtitle object to MicroDVD (.sub) format string
+    """
+    sub_content = []
+
+    # 获取帧率信息，如果没有则使用默认值24
+    fps = subtitle.info.other_info.get("fps", 24) if subtitle.info.other_info else 24
+
+    # 添加帧率信息行
+    sub_content.append(f"{{0}}{{0}}#$#{fps}")
+
+    for cue in subtitle.cues:
+        start_frame = _format_sub_time(cue.start, fps)
+        end_frame = _format_sub_time(cue.end, fps)
+        # 将多行文本转换为MicroDVD格式（使用|分隔）
+        text = cue.text.replace("\n", "|")
+        sub_content.append(f"{{{start_frame}}}{{{end_frame}}}{text}")
+
+    return "\n".join(sub_content)
+
+
 # 转换函数映射
 # Transform function mapping
-transform_functions = {"srt": to_srt, "vtt": to_vtt, "ass": to_ass}
+transform_functions = {
+    "srt": to_srt,
+    "vtt": to_vtt,
+    "ass": to_ass,
+    "sbv": to_sbv,
+    "sub": to_sub,
+}

@@ -141,26 +141,29 @@ class Subtitle:
         """Shifts all subtitle start and end times by the specified offset
         将字幕文件中所有字幕的开始和结束时间都加上偏移量"""
         if offset == 0:
-            return
+            return self
         for cue in self.cues:
             cue.start += offset
             cue.end += offset
+        return self
 
     def find(self, text: str):
-        """Returns a list of Cue objects containing the specified text
-        返回所有包含指定文本的 Cue 对象列表"""
-        return [cue for cue in self.cues if text in cue.text]
+        """Returns a new Subtitle object with Cue objects containing the specified text
+        返回包含指定文本的新 Subtitle 对象"""
+        matched_cues = [cue for cue in self.cues if text in cue.text]
+        return Subtitle(cues=matched_cues, info=self.info)
 
     def filter_by_time(self, start: float, end: float):
-        """Returns a list of subtitles within the specified time interval
-        返回在指定时间区间内的字幕列表"""
+        """Returns a new Subtitle object with subtitles within the specified time interval
+        返回在指定时间区间内的新 Subtitle 对象"""
         if start > end:
             start, end = end, start
-        return [
+        filtered_cues = [
             cue
             for cue in self.cues
             if start <= cue.start <= end or start <= cue.end <= end
         ]
+        return Subtitle(cues=filtered_cues, info=self.info)
 
     def merge(self, index1: int, index2: int):
         """In-place modification. Merges subtitles within a specified range.
@@ -168,7 +171,7 @@ class Subtitle:
         if index1 < 0 or index2 >= len(self.cues) or index1 > index2:
             raise IndexError("Index out of range")
         if index1 == index2:
-            return
+            return self
         start_time = self.cues[index1].start
         end_time = self.cues[index2].end
         merged_text = "\n".join(cue.text for cue in self.cues[index1 : index2 + 1])
@@ -176,6 +179,7 @@ class Subtitle:
         self.cues[index1 : index2 + 1] = [merged_cue]
         self._recalculate_indices(index1)
         self._recalcluate_duration()
+        return self
 
     def split(self, index: int, time: float):
         """In-place modification. Splits a specified subtitle into two.
@@ -190,6 +194,7 @@ class Subtitle:
         self.cues[index].end = time
         self.cues.insert(index + 1, new_cue)
         self._recalculate_indices(index)
+        return self
 
     def insert(self, index: int, cue: Cue):
         """In-place modification. Inserts a subtitle at the specified position.
@@ -200,6 +205,7 @@ class Subtitle:
         self.cues.insert(index, cue)
         self._recalculate_indices(index)
         self._recalcluate_duration()
+        return self
 
     def remove(self, index: int):
         """In-place modification. Removes a subtitle at the specified position.
@@ -209,6 +215,7 @@ class Subtitle:
         self.cues.pop(index)
         self._recalculate_indices(index - 1)
         self._recalcluate_duration()
+        return self
 
     def to_dict(self) -> dict:
         """Converts a Subtitle object to a dictionary.
@@ -218,7 +225,7 @@ class Subtitle:
             "info": self.info.to_dict(),
         }
 
-    def save(self, file_path: str, save_format: str = None) -> None:
+    def save(self, file_path: str, save_format: str = None) -> "Subtitle":
         """
         Saves the subtitle to a file in the specified format.
         将字幕保存为指定格式的文件。
@@ -229,6 +236,9 @@ class Subtitle:
 
         Raises:
             ValueError: If the specified format is not supported
+
+        Returns:
+            Subtitle: The subtitle object itself, for method chaining
         """
         # 如果没有指定格式，使用原始格式
         if save_format is None:
@@ -238,8 +248,10 @@ class Subtitle:
         save_format = save_format.lower()
 
         # 检查格式是否支持
+        from fairy_subtitle.parsers import transform_functions
+
         if save_format not in transform_functions:
-            raise ValueError(f"不支持的格式: {save_format}")
+            raise ValueError(f"Unsupported format: {save_format}")
 
         # 获取转换函数
         transform_func = transform_functions[save_format]
@@ -251,118 +263,40 @@ class Subtitle:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
+        # 返回self以支持链式调用
+        return self
+
     def to_srt(self) -> str:
         """Converts the subtitle to SRT format string.
-        将字幕转换为 SRT 格式字符串。"""
+        将字幕转换为SRT格式字符串。"""
+        from fairy_subtitle.parsers import to_srt
+
         return to_srt(self)
 
     def to_vtt(self) -> str:
         """Converts the subtitle to VTT format string.
-        将字幕转换为 VTT 格式字符串。"""
+        将字幕转换为VTT格式字符串。"""
+        from fairy_subtitle.parsers import to_vtt
+
         return to_vtt(self)
 
     def to_ass(self) -> str:
         """Converts the subtitle to ASS format string.
-        将字幕转换为 ASS 格式字符串。"""
+        将字幕转换为ASS格式字符串。"""
+        from fairy_subtitle.parsers import to_ass
+
         return to_ass(self)
 
+    def to_sbv(self) -> str:
+        """Converts the subtitle to SBV format string.
+        将字幕转换为SBV格式字符串。"""
+        from fairy_subtitle.parsers import to_sbv
 
-# Internal helper functions for time formatting
+        return to_sbv(self)
 
+    def to_sub(self) -> str:
+        """Converts the subtitle to MicroDVD (.sub) format string.
+        将字幕转换为MicroDVD (.sub)格式字符串。"""
+        from fairy_subtitle.parsers import to_sub
 
-def _format_srt_time(seconds: float) -> str:
-    """Converts seconds to SRT format time string (HH:MM:SS,ms)
-    将秒数转换为SRT格式时间字符串 (HH:MM:SS,ms)"""
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds_int = int(seconds % 60)
-    milliseconds = int((seconds % 1) * 1000)
-    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d},{milliseconds:03d}"
-
-
-def _format_vtt_time(seconds: float) -> str:
-    """Converts seconds to VTT format time string (HH:MM:SS.mmm)
-    将秒数转换为VTT格式时间字符串 (HH:MM:SS.mmm)"""
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds_int = int(seconds % 60)
-    milliseconds = int((seconds % 1) * 1000)
-    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
-
-
-def _format_ass_time(seconds: float) -> str:
-    """Converts seconds to ASS format time string (HH:MM:SS.ms)
-    将秒数转换为ASS格式时间字符串 (HH:MM:SS.ms)"""
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds_int = int(seconds % 60)
-    milliseconds = int((seconds % 1) * 100)
-    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:02d}"
-
-
-# Format conversion functions
-
-
-def to_srt(subtitle: "Subtitle") -> str:
-    """Converts Subtitle object to SRT format string
-    将Subtitle对象转换为SRT格式字符串"""
-    srt_content = []
-    for i, cue in enumerate(subtitle.cues, 1):
-        srt_content.append(str(i))
-        start_time = _format_srt_time(cue.start)
-        end_time = _format_srt_time(cue.end)
-        srt_content.append(f"{start_time} --> {end_time}")
-        srt_content.append(cue.text)
-        srt_content.append("")  # 空行分隔字幕块
-    return "\n".join(srt_content)
-
-
-def to_vtt(subtitle: "Subtitle") -> str:
-    """Converts Subtitle object to VTT format string
-    将Subtitle对象转换为VTT格式字符串"""
-    vtt_content = ["WEBVTT", ""]
-    for i, cue in enumerate(subtitle.cues, 1):
-        start_time = _format_vtt_time(cue.start)
-        end_time = _format_vtt_time(cue.end)
-        vtt_content.append(f"{start_time} --> {end_time}")
-        vtt_content.append(cue.text)
-        vtt_content.append("")  # 空行分隔字幕块
-    return "\n".join(vtt_content)
-
-
-def to_ass(subtitle: "Subtitle") -> str:
-    """Converts Subtitle object to ASS format string
-    将Subtitle对象转换为ASS格式字符串"""
-    ass_content = [
-        "[Script Info]",
-        "Title: Converted Subtitle",
-        "ScriptType: v4.00+",
-        "PlayResX: 1920",
-        "PlayResY: 1080",
-        "Aspect Ratio: 16:9",
-        "Collisions: Normal",
-        "Timer: 100.0000",
-        "WrapStyle: 0",
-        "",
-        "[V4+ Styles]",
-        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,0",
-        "",
-        "[Events]",
-        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
-    ]
-
-    for i, cue in enumerate(subtitle.cues, 1):
-        start_time = _format_ass_time(cue.start)
-        end_time = _format_ass_time(cue.end)
-        # 简单转换，只保留文本内容
-        text = cue.text.replace("\n", "\\N")
-        ass_content.append(
-            f"Dialogue: 0,{start_time},{end_time},Default,,0,0,0,,{text}"
-        )
-
-    return "\n".join(ass_content)
-
-
-# 转换函数映射
-transform_functions = {"srt": to_srt, "vtt": to_vtt, "ass": to_ass}
+        return to_sub(self)

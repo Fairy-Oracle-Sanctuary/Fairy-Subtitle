@@ -15,7 +15,7 @@
   </a>
 
   <a style="text-decoration:none">
-    <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version 1.0.0"/>
+    <img src="https://img.shields.io/badge/Version-1.1.0-blue.svg" alt="Version 1.1.0"/>
   </a>
 </p>
 
@@ -26,7 +26,7 @@
 
 ## 特性
 
-- 支持多种常见字幕格式：SRT、VTT、ASS
+- 支持多种常见字幕格式：SRT、VTT、ASS、SUB、SBV
 - 简单易用的API接口
 - 灵活的字幕项操作（合并、分割、插入、删除等）
 - 完整的异常处理机制
