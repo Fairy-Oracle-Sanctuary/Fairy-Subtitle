@@ -15,7 +15,7 @@
   </a>
 
   <a style="text-decoration:none">
-    <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version 1.0.0"/>
+    <img src="https://img.shields.io/badge/Version-1.1.0-blue.svg" alt="Version 1.1.0"/>
   </a>
 </p>
 
@@ -26,7 +26,7 @@
 
 ## Features
 
-- Supports multiple common subtitle formats: SRT, VTT, ASS
+- Supports multiple common subtitle formats: SRT, VTT, ASS, SUB, SBV
 - Simple and easy-to-use API interface
 - Flexible subtitle item operations (merge, split, insert, delete, etc.)
 - Complete exception handling mechanism

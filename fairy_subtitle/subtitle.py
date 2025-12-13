@@ -6,7 +6,7 @@ import re
 
 from .exceptions import UnsupportedFormatError
 from .models import Subtitle
-from .parsers import parse_ass, parse_srt, parse_vtt  # 添加parse_vtt导入
+from .parsers import parse_ass, parse_sbv, parse_srt, parse_sub, parse_vtt
 
 # 未来可以导入更多解析器
 # from .parsers import parse_vtt, parse_ass
@@ -47,6 +47,32 @@ def _validate_ass_format(content: str) -> bool:
     return content.strip().startswith("[Script Info]")
 
 
+def _validate_sbv_format(content: str) -> bool:
+    """
+    Validates if content matches SBV format characteristics
+    验证内容是否符合SBV格式特征
+
+    SBV format typically starts with timestamps in format "00:00:00.000,00:00:00.000"
+    SBV格式通常以时间戳格式 "00:00:00.000,00:00:00.000" 开头
+    """
+    # 检查是否包含SBV时间戳格式
+    sbv_timestamp_pattern = r"\d{2}:\d{2}:\d{2}\.\d{3},\d{2}:\d{2}:\d{2}\.\d{3}"
+    return bool(re.search(sbv_timestamp_pattern, content))
+
+
+def _validate_sub_format(content: str) -> bool:
+    """
+    Validates if content matches MicroDVD (.sub) format characteristics
+    验证内容是否符合MicroDVD (.sub)格式特征
+
+    MicroDVD format typically uses {frame_range}text format
+    MicroDVD格式通常使用{帧范围}文本格式
+    """
+    # 检查是否包含MicroDVD格式特征
+    sub_pattern = r"\{[0-9]+\}[0-9]+\}"
+    return bool(re.search(sub_pattern, content))
+
+
 class SubtitleLoader:
     @staticmethod
     def load(file_path: str, format: str = "auto", encoding: str = "utf-8") -> Subtitle:
@@ -56,8 +82,8 @@ class SubtitleLoader:
 
         :param file_path: Path to the subtitle file.
         :param file_path: 文件路径。
-        :param format: Subtitle format ('srt', 'vtt', 'ass', 'auto').
-        :param format: 字幕格式 ('srt', 'vtt', 'ass', 'auto')。
+        :param format: Subtitle format ('srt', 'vtt', 'ass', 'sbv', 'sub', 'auto').
+        :param format: 字幕格式 ('srt', 'vtt', 'ass', 'sbv', 'sub', 'auto')。
         :param encoding: File encoding.
         :param encoding: 文件编码。
         :return: A Subtitle object.
@@ -77,6 +103,8 @@ class SubtitleLoader:
                 "srt": _validate_srt_format,
                 "vtt": _validate_vtt_format,
                 "ass": _validate_ass_format,
+                "sbv": _validate_sbv_format,
+                "sub": _validate_sub_format,
             }
 
             if format in validation_functions:
@@ -96,6 +124,10 @@ class SubtitleLoader:
                 format = "vtt"
             elif _validate_ass_format(content):
                 format = "ass"
+            elif _validate_sbv_format(content):
+                format = "sbv"
+            elif _validate_sub_format(content):
+                format = "sub"
             else:
                 # Fallback detection based on file extension
                 # 基于扩展名的后备检测
@@ -105,19 +137,27 @@ class SubtitleLoader:
                     format = "vtt"
                 elif file_path.lower().endswith(".ass"):
                     format = "ass"
+                elif file_path.lower().endswith(".sbv"):
+                    format = "sbv"
+                elif file_path.lower().endswith(".sub"):
+                    format = "sub"
                 else:
                     raise UnsupportedFormatError(
-                        "无法自动检测格式，请手动指定 'srt', 'vtt' 或 'ass'。"
-                        "Unable to automatically detect format, please manually specify 'srt', 'vtt' or 'ass'."
+                        "无法自动检测格式，请手动指定 'srt', 'vtt', 'ass', 'sbv' 或 'sub'。"
+                        "Unable to automatically detect format, please manually specify 'srt', 'vtt', 'ass', 'sbv' or 'sub'."
                     )
 
         # 4. 根据格式选择对应的解析器
         if format == "srt":
             return parse_srt(file_path, content)
         elif format == "vtt":
-            return parse_vtt(file_path, content)  # 启用VTT解析
+            return parse_vtt(file_path, content)
         elif format == "ass":
             return parse_ass(file_path, content)
+        elif format == "sbv":
+            return parse_sbv(file_path, content)
+        elif format == "sub":
+            return parse_sub(file_path, content)
         else:
             raise UnsupportedFormatError(f"不支持的格式: {format}")
 
